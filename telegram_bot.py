@@ -64,6 +64,14 @@ class Handler:
             categories = conn.cursor().execute('select id from category').fetchall()
         categories = [c[0] for c in categories]
         categories.append('Alle')
+
+        if len(categories):
+            update.message.reply_text(
+                'Noch keine Kategorien in der Datenbank \n'
+                'Bitte versuche es später schauen.'
+            )
+            return
+
         message = context.bot.send_poll(
             update.message.chat.id,
             "Welche Kategorien?",

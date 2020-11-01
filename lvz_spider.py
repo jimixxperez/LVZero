@@ -92,7 +92,7 @@ class LVZSpider(scrapy.Spider):
             t = None
             if len(time_limit) == 2:
                 t = (
-                    datetime.datetime.now()
+                    datetime.now()
                         .replace(hour=int(time_limit[0]))
                         .replace(minute=int(time_limit[1]))
                 )
@@ -138,10 +138,9 @@ class LVZCrawler:
                 item['text'],
                 item['status'],
                 int(item['time'].timestamp()),
-                item['categorie'],
+                item['category'],
                 item['title'],)
             )
-            cur.execute('update')
     
     def _crawler_result(self, signal, item, response, spider):
         @defer.inlineCallbacks
