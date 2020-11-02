@@ -4,8 +4,6 @@ import logging
 import re
 import scrapy
 
-from expiringdict import ExpiringDict
-
 from datetime import datetime
 from scrapy.http import Request
 from scrapy.selector import Selector
