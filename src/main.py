@@ -47,7 +47,7 @@ def main():
    config.read(parser.parse_args().cfg)
    token = config['DEFAULT']['token']
    fpath = config['DEFAULT']['sqlite_db']
-   update_time = config['DEFAULT']['update_time']
+   update_time = int(config['DEFAULT']['update_time'])
    init_db(fpath)
    reactor.callWhenRunning(crawler_main, fpath, update_time)
    p1 = Process(target=telegram_main, args=(fpath, token))
