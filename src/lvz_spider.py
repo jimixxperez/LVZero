@@ -105,7 +105,7 @@ class LVZCrawler:
 
     def __init__(self, fname, update_time):
         self.update_time = update_time 
-        self.dbpool = adbapi.ConnectionPool("sqlite3", fname)
+        self.dbpool = adbapi.ConnectionPool("sqlite3", fname, check_same_thread=False)
         self.is_finished = defer.Deferred()
 
     @property
