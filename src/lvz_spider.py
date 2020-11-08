@@ -8,9 +8,10 @@ from datetime import datetime
 from scrapy.http import Request
 from scrapy.selector import Selector
 from scrapy.crawler import CrawlerRunner
-
 from scrapy.signalmanager import dispatcher
-from twisted.internet import defer, reactor
+from scrapy.spidermiddlewares.httperror import HttpError
+
+from twisted.internet import defer, reactor, error
 from twisted.enterprise import adbapi
 from twisted.python.failure import Failure
 from urllib.parse import urlparse
@@ -61,9 +62,32 @@ class LVZSpider(scrapy.Spider):
         item['title'] = title
         yield item
 
+    def _errback_open_article(self, failure):
+        logger.error('Could not open article,  an error occured: \n{}'.format(failure.getBriefTraceback()))
+        self._handle_failure(failure)
+
+    def _errback_lvz_main_site(self, failure):
+        logger.error('could not access lvz main site, an error occured: {}'.format(failure.getBriefTraceback()))
+        self._handle_failure(failure)
+
+    def _handle_failure(self, failure):
+        if failure.check(HttpError):
+            # these exceptions come from HttpError spider middleware
+            # you can get the non-200 response
+            response = failure.value.response
+            logger.error('HttpError on %s', response.url)
+
+        elif failure.check(error.DNSLookupError):
+            # this is the original request
+            request = failure.request
+            logger.error('DNSLookupError on %s', request.url)
+
+        elif failure.check(error.TimeoutError, error.TCPTimedOutError):
+            request = failure.request
+            logger.error('TimeoutError on %s', request.url)
+
     def parse(self, response):
         not_free_urls = []
-        free_urls = []
         logger.info('parsing page')
         for el in response.xpath('//span[contains(@class, "pdb-parts-paidcontent-freeuntilbadge_close")]/..').extract():
             url = Selector(text=el).css('a').xpath('@href').get()
@@ -155,17 +179,26 @@ class LVZCrawler:
 
     def _spider_finished(self, spider):
         logger.info('spider finished')
-        self.is_finished.callback(True)
+        if not self.is_finished.called:
+            self.is_finished.callback(True)
+
+    def _spider_error(self, failure, response, spider):
+        logger.error('spider error occured{}'.format(
+            failure.getBriefTraceback()
+        ))
+        if not self.is_finished.called:
+            self.is_finished.callback(True)
 
     def start_loop(self):
         logger.info('start loop')
+        dispatcher.connect(self._crawler_result, signal=scrapy.signals.item_scraped)
+        dispatcher.connect(self._spider_finished, signal=scrapy.signals.spider_idle)
+        dispatcher.connect(self._spider_finished, signal=scrapy.signals.spider_error)
         self._loop()
 
     @defer.inlineCallbacks
     def _loop(self):
         self.is_finished = defer.Deferred()
-        dispatcher.connect(self._crawler_result, signal=scrapy.signals.item_scraped)
-        dispatcher.connect(self._spider_finished, signal=scrapy.signals.spider_idle)
         logger.info('start crawler')
         runner.crawl(LVZSpider)
         yield self.is_finished

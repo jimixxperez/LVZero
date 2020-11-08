@@ -69,7 +69,7 @@ class Handler:
         if len(categories) < 2:
             update.message.reply_text(
                 'Noch keine Kategorien in der Datenbank \n'
-                'Bitte versuche es später schauen.'
+                'Bitte versuche es später nochmal.'
             )
             return
 
@@ -256,4 +256,4 @@ def main(fname, token):
 
 
 if __name__ == '__main__':
-    main('lvz.db')
+    main('lvz.db', token='')
