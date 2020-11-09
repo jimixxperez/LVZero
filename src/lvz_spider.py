@@ -198,10 +198,15 @@ class LVZCrawler:
 
     @defer.inlineCallbacks
     def _loop(self):
-        self.is_finished = defer.Deferred()
+        # TODO: not really required, should be deleted
+        self.is_finished = (
+            defer.Deferred()
+                .addCallback(
+                    lambda _: logger.info('finished')
+                )
+        )
         logger.info('start crawler')
-        runner.crawl(LVZSpider)
-        yield self.is_finished
+        yield runner.crawl(LVZSpider)
         reactor.callLater(self.update_time, self._loop)
 
 def main(fname, update_time):
