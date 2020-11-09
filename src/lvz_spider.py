@@ -192,7 +192,7 @@ class LVZCrawler:
     def start_loop(self):
         logger.info('start loop')
         dispatcher.connect(self._crawler_result, signal=scrapy.signals.item_scraped)
-        dispatcher.connect(self._spider_finished, signal=scrapy.signals.spider_idle)
+        dispatcher.connect(self._spider_finished, signal=scrapy.signals.spider_closed)
         dispatcher.connect(self._spider_finished, signal=scrapy.signals.spider_error)
         self._loop()
 
